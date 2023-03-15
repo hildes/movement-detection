@@ -5,7 +5,7 @@ import configparser
  
 def get_background(file_path): 
     cap = cv2.VideoCapture(file_path) 
-    # we will randomly select 50 frames for the calculating the median 
+    # select 50 frames uniformly at random for the calculating the median 
     frame_indices = np.random.randint(0, cap.get(cv2.CAP_PROP_FRAME_COUNT), 50)
     # frame_indices = cap.get(cv2.CAP_PROP_FRAME_COUNT) * np.random.uniform(size=50) 
 
@@ -21,49 +21,55 @@ def get_background(file_path):
     median_frame = np.median(frames, axis=0).astype(np.uint8)
     return median_frame
 
+def get_args(mode):
+    config = configparser.ConfigParser()
+    config.read('config.ini')
 
-config = configparser.ConfigParser()
-config.read('config.ini')
+    # Set default values for command line arguments based on the configuration file
+    default_input_file = config.get('default', 'input_file', fallback=None)
+    default_consecutive_frame = config.getint('default', 'consecutive_frame', fallback=1)
+    default_wait_milliseconds = config.getint('default', 'wait_milliseconds', fallback=50)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input_file', default=default_input_file, help='Path to the input file')
+    parser.add_argument('--config', help='Path to the configuration file')
+    parser.add_argument('--consecutive_frame', type=int, default=default_consecutive_frame, help='Number of consecutive frames to process at once')
+    parser.add_argument('--wait_milliseconds', type=int, default=default_wait_milliseconds, help='Number of milliseconds to wait between frames')
+
+    args = parser.parse_args()
+
+    # Update default values based on the configuration file
+    if config:
+        # config.read(args.config)
+        input_file = config.get(mode, 'input_file', fallback=None)
+        consecutive_frame = config.getint(mode, 'consecutive_frame', fallback=None)
+        wait_milliseconds = config.getint(mode, 'wait_milliseconds', fallback=None)
+        if input_file is not None:
+            args.input = default_input_file
+        if consecutive_frame is not None:
+            args.consecutive_frame = consecutive_frame
+        if wait_milliseconds is not None:
+            args.wait_milliseconds = wait_milliseconds
+
+
+    input_file = getattr(args, 'input_file', None)
+    consecutive_frame = getattr(args, 'consecutive_frame', None)
+    wait_milliseconds = getattr(args, 'wait_milliseconds', None)
+
+    if input_file is None:
+        print('Error: input file not specified')
+    if consecutive_frame is None:
+        print('Error: consecutive_frame not specified')
+    if wait_milliseconds is None:
+        print('Error: wait_milliseconds not specified')
+    
+    return input_file, consecutive_frame, wait_milliseconds
+
+
 
 mode = 'fast' # default, slow, fast
 
-# Set default values for command line arguments based on the configuration file
-default_input_file = config.get('default', 'input_file', fallback=None)
-default_consecutive_frame = config.getint('default', 'consecutive_frame', fallback=1)
-default_wait_milliseconds = config.getint('default', 'wait_milliseconds', fallback=50)
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--input_file', default=default_input_file, help='Path to the input file')
-parser.add_argument('--config', help='Path to the configuration file')
-parser.add_argument('--consecutive_frame', type=int, default=default_consecutive_frame, help='Number of consecutive frames to process at once')
-parser.add_argument('--wait_milliseconds', type=int, default=default_wait_milliseconds, help='Number of milliseconds to wait between frames')
-
-args = parser.parse_args()
-
-# Update default values based on the configuration file
-if config:
-    # config.read(args.config)
-    input_file = config.get(mode, 'input_file', fallback=None)
-    consecutive_frame = config.getint(mode, 'consecutive_frame', fallback=None)
-    wait_milliseconds = config.getint(mode, 'wait_milliseconds', fallback=None)
-    if input_file is not None:
-        args.input = default_input_file
-    if consecutive_frame is not None:
-        args.consecutive_frame = consecutive_frame
-    if wait_milliseconds is not None:
-        args.wait_milliseconds = wait_milliseconds
-
-
-input_file = getattr(args, 'input_file', None)
-consecutive_frame = getattr(args, 'consecutive_frame', None)
-wait_milliseconds = getattr(args, 'wait_milliseconds', None)
-
-if input_file is None:
-    print('Error: input file not specified')
-if consecutive_frame is None:
-    print('Error: consecutive_frame not specified')
-if wait_milliseconds is None:
-    print('Error: wait_milliseconds not specified')
+input_file, consecutive_frame, wait_milliseconds = get_args(mode)
 
 
 
@@ -75,7 +81,8 @@ save_name = f"outputs/{input_file.split('/')[-1]}"
 # define codec and create VideoWriter object 
 out = cv2.VideoWriter( 
     save_name, 
-    cv2.VideoWriter_fourcc(*'mp4v'), 10,  
+    cv2.VideoWriter_fourcc(*'mp4v'), # 'mp4v' the FourCC code for the MPEG-4 video codec
+    10,  # frame rate of the output video (10 frames per second)
     (frame_width, frame_height) 
 ) 
 # get the background model 
@@ -87,9 +94,6 @@ black_image = np.zeros(background.shape, dtype=np.uint8)
 frame_count = 0 
 while (cap.isOpened()): 
     ret, frame = cap.read() 
-    # wait for 50 millisecond
-    #if 
-    #cv2.waitKey(wait_milliseconds)
     if ret == True: 
         frame_count += 1 
         orig_frame = frame.copy()
@@ -104,9 +108,8 @@ while (cap.isOpened()):
         # thresholding to convert the frame to binary 
         ret, thres = cv2.threshold(frame_diff, 50, 255, cv2.THRESH_BINARY) 
 
-        # dilate the frame a bit to get some more white area... 
-        # ... makes the detection of contours a bit easier 
-        dilate_frame = cv2.dilate(thres, None, iterations=2) 
+        # dilate the frame a bit to get some more white area makes the detection of contours a bit easier 
+        dilate_frame = cv2.dilate(thres, None, iterations=2)
 
         # append the final result into the frame_diff_list 
         frame_diff_list.append(dilate_frame) 
@@ -120,9 +123,9 @@ while (cap.isOpened()):
             # display gray, background, frame_diff, thres, dilate_frame, sum_frames side by side horizontally
             cv2.imshow('Gray, Background, Frame Diff, thres, dilate_frame, sum_frames', np.hstack([np.vstack([gray, background]), np.vstack([frame_diff, thres]), np.vstack([dilate_frame, sum_frames])]))
             # draw the contours, not strictly necessary 
-            for i, cnt in enumerate(contours): 
+            for i, contour in enumerate(contours): 
                 cv2.drawContours(frame, contours, i, (0, 0, 255), 3) 
-            for contour in contours: 
+            # for contour in contours: 
                 # continue through the loop if contour area is less than 500... 
                 # ... helps in removing noise detection 
                 if cv2.contourArea(contour) < 500: 
@@ -132,12 +135,15 @@ while (cap.isOpened()):
                 # draw the bounding boxes 
                 cv2.rectangle(orig_frame, (x, y), (x+w, y+h), (0, 255, 0), 2) 
          
-            cv2.imshow('Detected Objects', orig_frame) 
+            cv2.imshow('Detected Objects', orig_frame)
+            # write the frame to the output file
             out.write(orig_frame)
             if cv2.waitKey(wait_milliseconds) & 0xFF == ord('q'): 
                 break 
     else: # could not read the frame
         break 
+# save output video as mp4 file in outputs folder
+out.release()
 cap.release() 
 cv2.destroyAllWindows()
 
