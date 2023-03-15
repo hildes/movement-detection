@@ -12,10 +12,11 @@ input_file: path to video to be used (people_walking.mp4)
 consecutive_frame: number of consecutive frames to be used at each step for 
 wait_milliseconds: number of milliseconds to wait between each frame
 
-### algorithm
+### Algorithm
 
 ```text
 Get the background image by taking the mean of 50 random frames
+
 Convert the frame to grayscale
 
 For each consecutive 4-frame set:
