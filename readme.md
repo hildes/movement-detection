@@ -8,9 +8,11 @@ Three alternative sets of parameters are defined in the `config.ini` file: defau
 The mode can be modified in the `movement_detection.py` script: `mode = 'fast' # default, slow, fast`
 ### Parameters
 
-input_file: path to video to be used (people_walking.mp4)
-consecutive_frame: number of consecutive frames to be used at each step for 
-wait_milliseconds: number of milliseconds to wait between each frame
+`input_file`: path to video to be used (people_walking.mp4)
+
+`consecutive_frame`: number of consecutive frames to be used at each step for 
+
+`wait_milliseconds`: number of milliseconds to wait between each frame
 
 ### Algorithm
 
