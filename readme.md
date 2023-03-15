@@ -14,7 +14,7 @@ wait_milliseconds: number of milliseconds to wait between each frame
 
 ### algorithm
 
-```python
+```text
 Get the background image by taking the mean of 50 random frames
 Convert the frame to grayscale
 
