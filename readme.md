@@ -16,7 +16,7 @@ wait_milliseconds: number of milliseconds to wait between each frame
 
 1. Get the background image by taking the mean of 50 random frames
 2. Convert the frame to grayscale
-For each consecutive 4-frame set:
+3. For each consecutive 4-frame set:
     For each frame in the 4-set:
         1. Compute abs. difference between background and current frame
         2. Convert that difference to black/white for pixels above/below 50 threshold
