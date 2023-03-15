@@ -14,9 +14,13 @@ wait_milliseconds: number of milliseconds to wait between each frame
 
 ### algorithm
 
+```
 1. Get the background image by taking the mean of 50 random frames
+
 2. Convert the frame to grayscale
+
 3. For each consecutive 4-frame set:
+
     For each frame in the 4-set:
         1. Compute abs. difference between background and current frame
         2. Convert that difference to black/white for pixels above/below 50 threshold
@@ -26,3 +30,4 @@ wait_milliseconds: number of milliseconds to wait between each frame
     For each contour with area >=500:
         1. Compute bounding box
         2. Draw bounding box on original frame
+```
