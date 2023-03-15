@@ -39,3 +39,8 @@ For each consecutive 4-frame set:
         
         Draw bounding box on original frame
 ```
+
+### Results
+
+![image1](https://user-images.githubusercontent.com/24638777/225451817-7e558608-caf2-4bbb-9b5e-80f6174fa7f7.png)
+![image2](https://user-images.githubusercontent.com/24638777/225451836-0f377343-9e52-4fed-b529-690ff216c929.png)
